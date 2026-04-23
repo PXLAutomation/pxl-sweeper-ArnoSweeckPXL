@@ -17,3 +17,29 @@ Verification evidence:
 - `TODO.md` contains `Phase 2 - Static App Foundation Runs and Builds` and only unchecked Phase 2 entries.
 - The source scaffold check returned no `src` or `tests` directories, so no Phase 2 implementation files were created.
 - `npm test`, `npm run build`, and `npm run preview` were not run because Phase 1 intentionally has no `package.json` or application code.
+
+# Phase 2 - Static App Foundation Runs and Builds
+
+Completed on 2026-04-23.
+
+- [x] Added `package.json` with npm metadata, `type: "module"`, Node engines, and `dev`, `test`, `build`, and `preview` scripts.
+- [x] Installed Vite and Vitest with npm and generated `package-lock.json`.
+- [x] Added Vite static app entry files in `index.html`, `src/main.js`, and `src/styles.css`.
+- [x] Added the initial `src/game/`, `src/ui/`, and `tests/unit/` structure without gameplay logic.
+- [x] Added `src/ui/appShell.js` with the static Phase 2 shell state, markup helper, and mount helper.
+- [x] Added Vitest unit coverage for app-shell markup and mount behavior.
+- [x] Documented setup, development, test, build, and preview commands in `README.md`.
+- [x] Refreshed `TODO.md` with only the approved Phase 3 entries before implementing game rules.
+
+Verification evidence:
+
+- Runtime preflight passed with `node v22.22.2` and `npm 10.9.7`.
+- `npm install -D vite vitest` completed, installing Vite `8.0.10` and Vitest `4.1.5` with no reported vulnerabilities.
+- `npm test` passed with 1 test file and 4 tests.
+- `npm run build` passed and created the ignored `dist/` output.
+- `npm run preview -- --host 127.0.0.1` served the built output at `http://127.0.0.1:4173/`.
+- Headless Firefox smoke check at 1280x720 rendered the static shell with `PXL Sweeper` and `Ready.`.
+- `dist/index.html` contains the document title `PXL Sweeper`.
+- `src/game/` contains only an empty `.gitkeep` marker.
+- Scope scan found no gameplay implementation terms in `src/` or `tests/`.
+- `git diff --check` passed.
