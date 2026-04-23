@@ -75,12 +75,39 @@ These may be included only if they remain small in scope and do not alter the co
 - Hover feedback on interactive cells
 - Keyboard shortcut for reset
 
-### Unresolved Decisions
+### Locked V1 Decisions
 
-- Exact difficulty values for board dimensions and mine counts
-- Exact visual style balance between retro homage and modern cleanliness
-- Exact representation of win/loss feedback
-- Exact chord interaction trigger behavior if different browser/input constraints require clarification
+Phase 1 locks the following decisions for v1. Later implementation phases must treat these as requirements unless this document is deliberately changed.
+
+| Decision Area | Locked V1 Decision |
+| --- | --- |
+| App stack | Static single-page app using vanilla JavaScript modules, HTML, and CSS with Vite. |
+| Package manager | npm, with `package-lock.json` committed once dependencies are installed. |
+| Unit test runner | Vitest, exposed through `npm test` as a one-shot test command. |
+| End-to-end runner | Playwright, introduced later for browser smoke coverage. |
+| Deployment target | Local-only static build verification for v1; no hosted deployment configuration is required unless requirements change. |
+| Visual direction | Mixed retro-modern presentation: classic square grid and readable number colors with cleaner modern controls. |
+
+The v1 difficulty presets are exactly:
+
+| ID | Label | Rows | Columns | Cells | Mines | Safe Cells |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `beginner` | Beginner | 9 | 9 | 81 | 10 | 71 |
+| `intermediate` | Intermediate | 16 | 16 | 256 | 40 | 216 |
+| `expert` | Expert | 16 | 30 | 480 | 99 | 381 |
+
+The mine counter displays remaining unflagged mines as `mine count minus placed flag count`. The value may become negative when placed flags exceed the mine count, such as `10 mines - 12 flags = -2`. Over-flagging does not create mines, prevent play, or determine win/loss state.
+
+Compact outcome feedback uses these exact messages in an inline status area near the game controls:
+
+| Status | Message |
+| --- | --- |
+| Initial | `Ready.` |
+| Active | `Playing.` |
+| Win | `You cleared the board.` |
+| Loss | `Mine hit. Try again.` |
+
+Outcome feedback shall not use a modal, route change, alert, or replacement screen. The board, reset control, timer, mine counter, and difficulty selector remain visible after win or loss.
 
 ## 5. Interaction Requirements
 
@@ -90,19 +117,20 @@ These may be included only if they remain small in scope and do not alter the co
 - Right click shall place a flag on a hidden cell.
 - Right click on a flagged cell shall remove the flag.
 - Chord interaction shall be supported.
+- Chord interaction shall be triggered by pressing the primary and secondary mouse buttons together on an already revealed numbered cell.
 - Chord interaction shall only apply to already revealed numbered cells.
+- Chord interaction shall not apply to hidden cells, flagged cells, unrevealed mines, or revealed zero cells.
 - When chord is triggered on a revealed numbered cell, the game shall reveal all adjacent non-flagged hidden cells if the number of adjacent flags equals the displayed number.
 - If the adjacent flags are incorrect during chord interaction and one or more adjacent unrevealed cells contain mines, the game shall end in a loss.
+- Board cells may suppress the default browser context menu so right-click flagging and chord interaction work reliably.
 - After a win or loss, reveal, flag, and chord actions shall no longer change the board state.
 - A reset control shall be available without leaving the current screen.
 - Touch input is not required for v1.
 - Mobile-specific interaction patterns are not required for v1.
 
-### Decision Note
+### Locked Interaction Decision
 
-**Recommended choice:** desktop-first original controls with left click reveal, right click flag, and chord enabled.  
-**Alternative:** remove chord support.  
-**Tradeoff:** removing chord lowers implementation burden slightly but makes the game less faithful to classic Minesweeper.
+The supported desktop controls are left click reveal, right click flag or unflag on hidden cells, and simultaneous left-right chord on revealed numbered cells. Double-click, keyboard-only chord, touch chord, and mobile-specific chord patterns are out of scope for v1 unless requirements are changed first.
 
 ## 6. UI and Screen Requirements
 
@@ -114,21 +142,21 @@ These may be included only if they remain small in scope and do not alter the co
 - The screen shall include a visible reset control.
 - The screen shall include a visible method to select one of three preset difficulties.
 - Win and loss feedback shall appear on the same screen without replacing the game with a separate page.
+- Initial, active, win, and loss statuses shall use the locked copy from Section 4.
+- Status feedback shall appear inline near the board controls, not in a modal or alert.
 - The board and essential controls shall remain visible after win or loss.
 - The layout shall be designed primarily for desktop use.
 - The layout shall remain readable at typical desktop browser sizes.
 - The UI may blend classic and modern styling, but gameplay readability shall take priority over decorative styling.
 
-### Decision Note
+### Locked UI Decision
 
-**Recommended choice:** mixed retro-modern presentation.  
-**Alternative:** full retro recreation or fully modern minimal style.  
-**Tradeoff:** a mixed style preserves recognisability while reducing the burden of perfect visual imitation.
+The v1 interface shall use a mixed retro-modern style: classic square cells, clear mine/flag/number states, and a restrained modern control area. Full pixel-perfect retro recreation, theme systems, and animated-heavy redesigns remain out of scope.
 
 ## 7. Functional Requirements
 
 - **FR-01:** The system shall display a rectangular game board composed of hidden cells.
-- **FR-02:** The system shall support three preset difficulty levels selectable by the player.
+- **FR-02:** The system shall support exactly three preset difficulty levels selectable by the player: Beginner, Intermediate, and Expert using the locked dimensions and mine counts from Section 4.
 - **FR-03:** The system shall start a new game using the selected difficulty when the game is first loaded or when the player resets.
 - **FR-04:** The system shall generate a mine layout randomly for each new game.
 - **FR-05:** The system shall ensure that the first revealed cell is not a mine.
@@ -154,7 +182,7 @@ These may be included only if they remain small in scope and do not alter the co
 - **FR-25:** The system shall start the timer when gameplay begins.
 - **FR-26:** The system shall stop the timer when the game ends.
 - **FR-27:** The system shall display a mine counter during play.
-- **FR-28:** The mine counter shall update when flags are placed or removed.
+- **FR-28:** The mine counter shall update when flags are placed or removed, displaying `mine count minus placed flag count` and allowing negative values.
 - **FR-29:** The system shall provide a reset control that starts a new game without reloading to a different page.
 - **FR-30:** The system shall keep the entire gameplay experience within a single page.
 - **FR-31:** The system shall preserve gameplay clarity across all supported difficulty presets.
@@ -183,18 +211,19 @@ These may be included only if they remain small in scope and do not alter the co
 - The game is fully playable without navigating to another page.
 - The game presents a Minesweeper-style board with hidden cells, mines, flags, and numbered reveals.
 - The game supports exactly three preset difficulty levels.
+- The three presets are Beginner 9x9 with 10 mines, Intermediate 16x16 with 40 mines, and Expert 16x30 with 99 mines.
 - The first revealed cell is never a mine.
 - Left click reveals cells.
 - Right click places and removes flags.
-- Chord interaction is available on revealed numbered cells.
+- Chord interaction is available through simultaneous left and right mouse buttons on revealed numbered cells.
 - Revealing a mine causes an immediate loss.
 - Revealing all non-mine cells causes a win.
 - Zero-value cells trigger correct flood reveal behavior.
 - A timer is visible and functions during active play.
-- A mine counter is visible and updates during play.
+- A mine counter is visible and updates during play, including negative values when flags exceed mine count.
 - A reset control starts a new game on the same screen.
 - After losing, mines are shown and incorrect flags are identifiable.
-- After winning or losing, a compact outcome message appears on the same screen.
+- After winning or losing, the compact outcome message appears on the same screen using `You cleared the board.` or `Mine hit. Try again.`.
 - After winning or losing, board interactions no longer affect the game state.
 
 ### Gameplay Acceptance Criteria
@@ -204,8 +233,9 @@ These may be included only if they remain small in scope and do not alter the co
 - Given a hidden zero-value cell, when revealed, all connected zero-value cells and bordering numbered cells are revealed.
 - Given a hidden cell, when the player right-clicks it, the cell becomes flagged.
 - Given a flagged cell, when the player right-clicks it again, the flag is removed.
-- Given a revealed numbered cell with matching adjacent flag count, when the player performs chord interaction, all adjacent non-flagged hidden cells are revealed.
+- Given a revealed numbered cell with matching adjacent flag count, when the player presses the primary and secondary mouse buttons together on that cell, all adjacent non-flagged hidden cells are revealed.
 - Given a revealed numbered cell without matching adjacent flag count, chord interaction reveals nothing.
+- Given the player places more flags than the selected preset's mine count, the mine counter displays a negative remaining value.
 - Given a mine cell is revealed, the game ends immediately in a loss.
 - Given all non-mine cells have been revealed, the game ends immediately in a win.
 
@@ -213,6 +243,7 @@ These may be included only if they remain small in scope and do not alter the co
 
 - The board, timer, mine counter, difficulty controls, and reset control are visible on the main screen.
 - Win/loss feedback does not replace the game with a separate page.
+- Win/loss feedback uses the locked inline messages and leaves the board and controls visible.
 - The interface remains readable on a standard desktop browser window.
 
 ## 10. Assumptions
@@ -224,14 +255,11 @@ These may be included only if they remain small in scope and do not alter the co
 - The project values gameplay faithfulness over visual perfection.
 - Chord interaction is part of the intended “close to original” experience.
 - The application is expected to be self-contained and not depend on user authentication or backend data.
+- v1 release verification targets the local static build artifact, not a hosted deployment.
 
 ## 11. Open Questions
 
-- What exact board dimensions and mine counts will be used for the three preset difficulties?
-- What exact visual style should be used on the retro-to-modern spectrum?
-- What exact text or visual treatment should be used for win and loss messages?
-- Should the mine counter be allowed to go negative when the player places too many flags, or should it stop at zero?
-- What exact chord trigger should be used in the browser context if multiple implementation approaches are possible?
+No open v1 questions remain after the Phase 1 decisions.
 
 ## 12. Recommended Scope Baseline
 
@@ -276,19 +304,6 @@ This baseline is complete enough to feel like a real Minesweeper clone and restr
 - The `package.json` file shall include at least a `test` script so the same test command can be run every time.
 - If the project uses ES module imports in JavaScript, `package.json` shall set `"type": "module"`.
 - The project shall remain compatible with a plain JavaScript, static-site workflow.
-
-Recommend 3 stack options for this project.
-
-Constraints:
-- understandable in this course
-- easy for an AI coding agent to generate, review, and test
-- simple deployment
-- no unnecessary complexity
-
-For each option, give:
-- why it fits
-- what it makes harder
-- test strategy
-- deploy strategy
-
-Then recommend one option and explain why it is the best teaching choice.
+- The v1 project shall use npm, Vite, vanilla JavaScript modules, HTML, CSS, and Vitest as locked in Section 4.
+- Browser smoke coverage shall use Playwright when end-to-end coverage is introduced.
+- Deployment verification shall be local-only for v1: `npm run build` creates the static artifact and `npm run preview` verifies it locally once Phase 2 adds those scripts.

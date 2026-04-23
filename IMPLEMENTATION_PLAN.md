@@ -19,15 +19,15 @@ The current repository contains project documentation but no application source 
 - Project name: PXL Sweeper.
 - Project type: static, desktop-first, single-page browser game.
 - Primary project truth: `REQUIREMENTS.md`.
-- Deployment target: local static build artifact first, with optional static-host deployment only if confirmed in Phase 1.
+- Deployment target: local-only static build artifact verification for v1.
 - Risk tolerance: medium, because classic Minesweeper has compact UI scope but non-trivial rule interactions around first-click safety, flood reveal, chord behavior, and end-state freezing.
 - Review cadence: one phase should fit one focused review cycle, and each `TODO.md` entry must be independently reviewable.
-- Implementation stack assumption: vanilla JavaScript modules, HTML, and CSS using npm scripts and Vite for development/build, Vitest for unit tests, and Playwright for later end-to-end validation.
-- The Vite build assumption follows the current Vite static deployment documentation, where `npm run build` produces a `dist` output and `npm run preview` locally serves the built result: https://vite.dev/guide/static-deploy.html.
-- The unit-test assumption follows the current Vitest documentation, where `package.json` can expose a `test` script backed by Vitest and `vitest run` can be used for one-shot CI-style runs: https://vitest.dev/guide/.
-- The end-to-end-test assumption follows the current Playwright documentation, where tests can be run from the command line with `npx playwright test`: https://playwright.dev/docs/running-tests.
+- Implementation stack: vanilla JavaScript modules, HTML, and CSS using npm scripts and Vite for development/build, Vitest for unit tests, and Playwright for later end-to-end validation.
+- The Vite build decision follows the current Vite static deployment documentation, where `npm run build` produces a `dist` output and `npm run preview` locally serves the built result: https://vite.dev/guide/static-deploy.html.
+- The unit-test decision follows the current Vitest documentation, where `package.json` can expose a `test` script backed by Vitest and `vitest run` can be used for one-shot CI-style runs: https://vitest.dev/guide/.
+- The end-to-end-test decision follows the current Playwright documentation, where tests can be run from the command line with `npx playwright test`: https://playwright.dev/docs/running-tests.
 - No backend, authentication, persistence, story mode, multiplayer, audio, achievements, custom board editor, or mobile-first redesign is in scope for v1.
-- Difficulty values, mine-counter negative behavior, final win/loss copy, visual style balance, and browser chord trigger details are unresolved and must be confirmed before the phases that depend on them.
+- Phase 1 locks the preset values, negative mine-counter behavior, final win/loss copy, visual direction, browser chord trigger, stack, package manager, and local-only deployment target in `REQUIREMENTS.md`.
 
 # Delivery strategy
 
@@ -84,11 +84,11 @@ Resolve the product and technical decisions that would otherwise block implement
 - Upstream dependency: current `REQUIREMENTS.md` must remain the source of product truth.
 - Intra-project dependency: `GEMINI.md` workflow rules must be followed.
 - This phase has no earlier phase dependency.
-- Blockers: exact difficulty values, chord trigger semantics, mine-counter behavior, stack choice, and deployment target must be decided before later phases can proceed safely.
+- Phase 1 decision targets: exact difficulty values, chord trigger semantics, mine-counter behavior, stack choice, and deployment target must be decided before later phases can proceed safely.
 
 ### Risks
 
-- Medium risk: unresolved decisions can cause rework in model tests, UI layout, or deployment setup.
+- Medium risk: leaving decisions open can cause rework in model tests, UI layout, or deployment setup.
 - Main failure modes are starting implementation with placeholder difficulty values, adding a stack that is too complex for the course context, or deferring chord behavior until after UI code has already shaped input handling.
 
 ### Tests and checks to run
@@ -252,7 +252,7 @@ Implement and test the pure Minesweeper game rules without depending on DOM rend
 - Depends on Phase 1 difficulty and rule decisions.
 - Upstream dependency: Vitest must be available through npm scripts.
 - Intra-project dependency: app source structure must exist.
-- Blocker: this phase cannot start if difficulty values or first-click safety expectations are still undecided.
+- Blocker: this phase cannot start if `REQUIREMENTS.md` no longer locks difficulty values or first-click safety expectations.
 
 ### Risks
 
@@ -339,7 +339,7 @@ Connect the pure game model to the single-screen UI so the player can start game
 - Depends on Phase 3 completion.
 - Upstream dependency: browser DOM APIs available through the app runtime and test environment.
 - Intra-project dependency: pure game model must expose stable actions/selectors for UI integration.
-- Blocker: if win/loss feedback treatment is still undecided, the status display part must wait.
+- Blocker: if `REQUIREMENTS.md` no longer locks win/loss feedback treatment, the status display part must wait.
 
 ### Risks
 
@@ -512,7 +512,7 @@ Implement chord interaction for revealed numbered cells according to the confirm
 - Depends on Phase 1 chord trigger decision.
 - Upstream dependency: the browser input approach must work reliably in Chrome, Firefox, and Edge for desktop use.
 - Intra-project dependency: flags and mine reveal behavior must already be correct.
-- Blocker: this phase cannot start if chord trigger semantics are still unresolved.
+- Blocker: this phase cannot start if `REQUIREMENTS.md` no longer locks chord trigger semantics.
 
 ### Risks
 
@@ -681,7 +681,7 @@ Bring the single-screen game presentation to a readable desktop-ready v1 standar
 - Depends on Phase 1 visual style and feedback decisions.
 - Upstream dependency: target desktop browsers are current major Chrome, Firefox, and Edge.
 - Intra-project dependency: all core gameplay UI states must already exist.
-- Blocker: if exact visual direction is still unresolved, decide it before editing CSS.
+- Blocker: if `REQUIREMENTS.md` no longer locks the visual direction, decide it before editing CSS.
 
 ### Risks
 
@@ -977,7 +977,7 @@ Complete final validation, requirement traceability, documentation cleanup, and 
 
 # Dependency notes
 
-- Phase 1 is the gate for all unresolved product and technical decisions.
+- Phase 1 is the gate for all product and technical decisions.
 - Phase 2 must complete before source implementation because later phases depend on stable scripts and file structure.
 - Phase 3 must complete before UI work because UI slices should consume tested model behavior instead of duplicating rules.
 - Phase 5 must complete before Phase 6 because chord behavior depends on flags and mine/loss rendering.
@@ -998,7 +998,7 @@ A phase must be split before implementation starts if it:
 - cannot be reviewed without scanning broad source, test, docs, and config changes at once;
 - changes more than one risky subsystem such as game rules, input handling, timer lifecycle, deployment, or test infrastructure;
 - contains `TODO.md` entries that cannot be individually verified;
-- requires unresolved decisions that are not already captured as blockers.
+- requires decisions that are not already captured as blockers.
 
 Oversized phases are not allowed to proceed unchanged. If a phase grows during implementation, stop, update `IMPLEMENTATION_PLAN.md`, refresh `TODO.md`, and review the split before continuing.
 
@@ -1032,20 +1032,22 @@ The overall project is complete when:
 - `DONE.md` contains only reviewed and verified completed work;
 - final review confirms no out-of-scope systems were added.
 
+# Phase 1 locked decisions
+
+Phase 1 records these decisions in `REQUIREMENTS.md`:
+
+- V1 uses npm, Vite, vanilla JavaScript modules, HTML, CSS, Vitest, and later Playwright for end-to-end smoke coverage.
+- V1 has exactly three presets: Beginner 9x9 with 10 mines, Intermediate 16x16 with 40 mines, and Expert 16x30 with 99 mines.
+- The mine counter displays `mine count minus placed flag count` and may go negative.
+- The desktop chord trigger is simultaneous primary and secondary mouse buttons on an already revealed numbered cell.
+- Compact status copy is `Ready.`, `Playing.`, `You cleared the board.`, and `Mine hit. Try again.`.
+- The visual direction is mixed retro-modern.
+- The v1 deployment target is local-only static build verification.
+
 # Open questions
-
-Blocking unknowns to resolve in Phase 1:
-
-- What exact stack and package manager should be used for v1?
-- What exact board dimensions and mine counts should the three preset difficulties use?
-- Should the mine counter be allowed to go negative when flags exceed the mine count, or should it stop at zero?
-- What exact chord trigger should be used for desktop browser play?
-- What exact compact win/loss message copy or visual treatment should be used?
-- Is the deployment target local-only, or should the project prepare for a named static host?
 
 Non-blocking unknowns that must be resolved before their dependent phase:
 
-- What is the final balance between classic Windows Minesweeper homage and cleaner modern styling?
 - Should the optional reset keyboard shortcut be included, or left out for v1 simplicity?
 - Which desktop browsers are available for final manual verification on the development machine?
 - Should deterministic test hooks be exposed only in test builds, or can fixed board fixtures be tested entirely at the model level?
